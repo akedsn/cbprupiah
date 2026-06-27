@@ -1,1089 +1,381 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Heart, 
-  ShieldCheck, 
-  Brain, 
-  BookOpen, 
-  Gamepad2, 
-  FileText, 
-  Award, 
-  CheckCircle, 
-  XCircle, 
-  RotateCcw, 
-  ArrowRight, 
-  Eye, 
-  Hand, 
-  Sun,
-  ShieldAlert,
-  ShoppingBag,
-  Coins,
-  Sparkles,
-  ChevronRight,
-  BookmarkCheck
-} from 'lucide-react';
-
-export default function App() {
-  // State Navigasi Utama
-  const [activeTab, setActiveTab] = useState('materi'); // 'materi' | 'game' | 'asesmen' | 'sertifikat'
-
-  // State untuk Materi Interaktif
-  const [activePillar, setActivePillar] = useState('cinta'); // 'cinta' | 'bangga' | 'paham'
-  const [interactive3D, setInteractive3D] = useState(''); // 'dilihat' | 'diraba' | 'diterawang' | ''
-  const [show5J, setShow5J] = useState(false);
-
-  // State untuk Game Edukasi ("Petualangan CBP Rupiah")
-  const [gameState, setGameState] = useState({
-    currentScenario: 0,
-    cintaScore: 50,
-    banggaScore: 50,
-    pahamScore: 50,
-    history: [],
-    isFinished: false
-  });
-
-  // State untuk Asesmen
-  const [assessmentAnswers, setAssessmentAnswers] = useState({});
-  const [assessmentSubmitted, setAssessmentSubmitted] = useState(false);
-  const [assessmentScore, setAssessmentScore] = useState(0);
-
-  // Skenario Game Edukasi
-  const gameScenarios = [
-    {
-      id: 1,
-      title: "Uang Kembalian Kusut",
-      description: "Saat jajan di kantin sekolah, kamu menerima uang kembalian Rp10.000 dalam kondisi sangat kusut dan sedikit kotor. Apa yang akan kamu lakukan?",
-      options: [
-        {
-          text: "Menerimanya dengan baik, lalu menyetrikanya dengan hati-hati di rumah agar rapi kembali serta menyimpannya di dompet datar (tidak dilipat).",
-          impact: { cinta: 30, bangga: 10, paham: 0 },
-          feedback: "Hebat! Kamu menerapkan prinsip Cinta Rupiah dengan merawat fisiknya agar masa edar uang lebih panjang."
-        },
-        {
-          text: "Menolaknya dengan kasar dan meminta diganti uang yang benar-benar baru mengkilap.",
-          impact: { cinta: -10, bangga: -10, paham: 0 },
-          feedback: "Kurang tepat. Menolak uang layak edar secara kasar tidak mencerminkan kecintaan dan penghargaan terhadap simbol negara."
-        },
-        {
-          text: "Menerimanya saja, lalu melipat-lipatnya menjadi pesawat kertas kecil untuk disimpan di saku celana.",
-          impact: { cinta: -30, bangga: 0, paham: -10 },
-          feedback: "Waduh! Melipat-lipat uang melanggar prinsip merawat Rupiah dan dapat merusak fisik uang tersebut."
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Modul Interaktif: CBP Rupiah</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f7f9fa; }
+        .clay-card {
+            border-radius: 24px;
+            box-shadow: inset 2px 2px 5px rgba(255,255,255,0.7), 4px 4px 15px rgba(0,0,0,0.06);
         }
-      ]
-    },
-    {
-      id: 2,
-      title: "Belanja Produk Impor",
-      description: "Kamu sedang mencari sepatu baru di toko online. Ada sepatu merek luar negeri terkenal (impor) dan sepatu merek lokal buatan Bandung yang kualitasnya tidak kalah bagus dengan harga lebih terjangkau. Mana yang kamu pilih?",
-      options: [
-        {
-          text: "Membeli sepatu merek lokal buatan Bandung menggunakan Rupiah sebagai wujud rasa bangga terhadap produk dalam negeri.",
-          impact: { cinta: 10, bangga: 40, paham: 10 },
-          feedback: "Luar biasa! Menggunakan Rupiah untuk membeli produk lokal mendukung roda perekonomian nasional dan merupakan wujud Bangga Rupiah."
-        },
-        {
-          text: "Membeli sepatu impor menggunakan mata uang asing (USD) di platform luar negeri demi gengsi sosial.",
-          impact: { cinta: 0, bangga: -30, paham: -10 },
-          feedback: "Kurang bijak. Mengutamakan mata uang asing dibanding Rupiah di wilayah NKRI mengurangi kedaulatan Rupiah sebagai pemersatu bangsa."
-        }
-      ]
-    },
-    {
-      id: 3,
-      title: "Iming-iming Diskon Belanja Online",
-      description: "Kamu melihat iklan di media sosial yang menawarkan diskon 90% untuk game console impianmu. Namun, situs penjualnya terlihat mencurigakan dan meminta data OTP serta PIN perbankanmu untuk verifikasi pembayaran. Bagaimana sikapmu?",
-      options: [
-        {
-          text: "Langsung mengisi data OTP dan PIN agar tidak kehabisan promo diskon besar tersebut.",
-          impact: { cinta: 0, bangga: 0, paham: -40 },
-          feedback: "Bahaya sekali! Membagikan OTP dan PIN membuatmu rentan terhadap kejahatan siber. Ini tidak mencerminkan sikap Paham Rupiah."
-        },
-        {
-          text: "Mengabaikan tawaran tersebut, melakukan cek ulang legalitas toko, dan menjaga kerahasiaan data pribadi keuangan secara ketat.",
-          impact: { cinta: 0, bangga: 10, paham: 40 },
-          feedback: "Sempurna! Kamu telah bertransaksi dengan bijak, waspada terhadap kejahatan siber, serta memahami risiko keuangan digital."
-        }
-      ]
-    },
-    {
-      id: 4,
-      title: "Menabung vs Membelanjakan Semua",
-      description: "Kamu mendapatkan hadiah uang tunai Rp100.000 dari nenek. Teman-temanmu mengajakmu menghabiskan uang itu hari ini juga untuk membeli mainan yang sedang tren tapi sebenarnya tidak terlalu kamu butuhkan. Tindakanmu?",
-      options: [
-        {
-          text: "Menyisihkan Rp50.000 untuk ditabung terlebih dahulu di bank/celengan, sisanya digunakan untuk kebutuhan sekolah yang mendesak.",
-          impact: { cinta: 10, bangga: 15, paham: 35 },
-          feedback: "Sangat bijak! Memahami fungsi uang untuk masa depan dengan cara berhemat dan menabung adalah esensi penting dari Paham Rupiah."
-        },
-        {
-          text: "Membelanjakan seluruh Rp100.000 hari itu juga agar terlihat keren di depan teman-teman.",
-          impact: { cinta: 0, bangga: -10, paham: -30 },
-          feedback: "Kurang tepat. Konsumtif berlebihan tanpa perencanaan keuangan menunjukkan ketidakpahaman atas fungsi nilai Rupiah secara jangka panjang."
-        }
-      ]
-    }
-  ];
+        .clay-btn-red { background: #e57373; box-shadow: 0 4px 0 #c62828; color: white; border-radius: 12px; transition: all 0.1s; }
+        .clay-btn-red:active { transform: translateY(4px); box-shadow: 0 0px 0 #c62828; }
+        .clay-btn-blue { background: #64b5f6; box-shadow: 0 4px 0 #1565c0; color: white; border-radius: 12px; transition: all 0.1s; }
+        .clay-btn-blue:active { transform: translateY(4px); box-shadow: 0 0px 0 #1565c0; }
+        .clay-btn-green { background: #81c784; box-shadow: 0 4px 0 #2e7d32; color: white; border-radius: 12px; transition: all 0.1s; }
+        .clay-btn-green:active { transform: translateY(4px); box-shadow: 0 0px 0 #2e7d32; }
+    </style>
+</head>
+<body class="p-3 md:p-6 text-gray-800">
 
-  // Data Soal Asesmen
-  const assessmentQuestions = [
-    {
-      id: 1,
-      question: "Mengapa Rupiah disebut sebagai salah satu simbol kedaulatan bangsa Indonesia?",
-      options: [
-        "A. Karena Rupiah bernilai paling tinggi di dunia keuangan global.",
-        "B. Karena Rupiah merupakan satu-satunya alat pembayaran yang sah di seluruh wilayah NKRI yang memperkokoh persatuan nasional.",
-        "C. Karena Rupiah diterbitkan oleh bank swasta terbesar di Indonesia.",
-        "D. Karena Rupiah mudah didesain ulang setiap tahunnya."
-      ],
-      correct: 1,
-      explanation: "Rupiah bukan sekadar mata uang, melainkan lambang kedaulatan dan alat pemersatu bangsa di seluruh wilayah NKRI (Negara Kesatuan Republik Indonesia)."
-    },
-    {
-      id: 2,
-      question: "Apa saja langkah konkrit dalam mengenali keaslian uang kertas Rupiah menggunakan metode 3D?",
-      options: [
-        "A. Dijemur, Digosok, Dilipat",
-        "B. Disorot, Dirobek, Dihidu",
-        "C. Dilihat, Diraba, Diterawang",
-        "D. Disiram, Dicuci, Distrika"
-      ],
-      correct: 2,
-      explanation: "Metode 3D adalah Dilihat (perubahan warna, benang pengaman), Diraba (kasarnya tekstur kertas pada bagian tertentu), dan Diterawang (gambar tanda air/watermark ke arah cahaya)."
-    },
-    {
-      id: 3,
-      question: "Yang manakah di bawah ini yang merupakan tindakan yang merusak uang fisik Rupiah dan melanggar prinsip 'Cinta Rupiah'?",
-      options: [
-        "A. Menyimpan uang kertas dalam keadaan rapi di dompet tanpa dilipat.",
-        "B. Menyetrika uang kertas yang lembab dengan suhu hangat agar rapi.",
-        "C. Mencoret-coret, menstapler, membasahi, meremas, atau melipat uang kertas.",
-        "D. Melaporkan kepada pihak berwajib jika menemukan uang palsu."
-      ],
-      correct: 2,
-      explanation: "Mencoret-coret, menstapler, membasahi, meremas, atau melipat termasuk ke dalam perusakan fisik uang yang dilarang karena merusak kualitas fisik rupiah."
-    },
-    {
-      id: 4,
-      question: "Salah satu pilar 'Paham Rupiah' adalah 'Bijak Bertransaksi dan Belanja'. Contoh penerapan perilaku ini dalam kehidupan sehari-hari adalah...",
-      options: [
-        "A. Membeli semua barang yang sedang diskon sekalipun tidak dibutuhkan.",
-        "B. Membagikan kode OTP atau PIN kepada orang asing yang menjanjikan hadiah online.",
-        "C. Berbelanja sesuai kebutuhan, menjaga kerahasiaan data keuangan, serta rajin menabung untuk masa depan.",
-        "D. Menggunakan seluruh uang jajan untuk bermain game online."
-      ],
-      correct: 2,
-      explanation: "Bijak bertransaksi berarti paham fungsi uang, merencanakan keuangan, waspada terhadap kejahatan siber (tidak membagikan OTP/PIN), dan berbelanja secara bertanggung jawab."
-    },
-    {
-      id: 5,
-      question: "Apa makna dari sikap 'Bangga Rupiah' di kehidupan bermasyarakat?",
-      options: [
-        "A. Menggunakan mata uang asing saat berbelanja di pasar tradisional.",
-        "B. Selalu bertransaksi menggunakan Rupiah di seluruh pelosok negeri dan mencintai produk lokal hasil karya anak bangsa.",
-        "C. Menyimpan uang Rupiah di luar negeri agar lebih aman.",
-        "D. Menolak bertransaksi dengan uang koin."
-      ],
-      correct: 1,
-      explanation: "Bangga Rupiah diwujudkan dengan menggunakan Rupiah di setiap transaksi sebagai pemersatu bangsa dan mendukung perekonomian nasional dengan bangga produk lokal."
-    }
-  ];
-
-  // Fungsi Game
-  const handleGameAnswer = (optionIndex) => {
-    const scenario = gameScenarios[gameState.currentScenario];
-    const option = scenario.options[optionIndex];
-    
-    const newCinta = Math.min(100, Math.max(0, gameState.cintaScore + option.impact.cinta));
-    const newBangga = Math.min(100, Math.max(0, gameState.banggaScore + option.impact.bangga));
-    const newPaham = Math.min(100, Math.max(0, gameState.pahamScore + option.impact.paham));
-
-    const updatedHistory = [...gameState.history, {
-      scenarioTitle: scenario.title,
-      chosenOption: option.text,
-      feedback: option.feedback,
-      impact: option.impact
-    }];
-
-    const nextScenario = gameState.currentScenario + 1;
-    const isFinished = nextScenario >= gameScenarios.length;
-
-    setGameState({
-      ...gameState,
-      cintaScore: newCinta,
-      banggaScore: newBangga,
-      pahamScore: newPaham,
-      history: updatedHistory,
-      currentScenario: nextScenario,
-      isFinished: isFinished
-    });
-  };
-
-  const resetGame = () => {
-    setGameState({
-      currentScenario: 0,
-      cintaScore: 50,
-      banggaScore: 50,
-      pahamScore: 50,
-      history: [],
-      isFinished: false
-    });
-  };
-
-  // Fungsi Asesmen
-  const handleSelectAssessment = (qId, optionIndex) => {
-    setAssessmentAnswers({
-      ...assessmentAnswers,
-      [qId]: optionIndex
-    });
-  };
-
-  const submitAssessment = () => {
-    let correctCount = 0;
-    assessmentQuestions.forEach((q) => {
-      if (assessmentAnswers[q.id] === q.correct) {
-        correctCount++;
-      }
-    });
-    const finalScore = (correctCount / assessmentQuestions.length) * 100;
-    setAssessmentScore(finalScore);
-    setAssessmentSubmitted(true);
-  };
-
-  const resetAssessment = () => {
-    setAssessmentAnswers({});
-    setAssessmentSubmitted(false);
-    setAssessmentScore(0);
-  };
-
-  // Menentukan kelayakan sertifikat
-  const canGetCertificate = assessmentSubmitted && assessmentScore >= 80;
-
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col selection:bg-rose-200">
-      
-      {/* Header Aplikasi */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-100 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-rose-600 text-white p-2.5 rounded-2xl shadow-md flex items-center justify-center">
-              <Coins className="w-6 h-6 animate-pulse" />
+    <div class="max-w-4xl mx-auto bg-white rounded-[32px] shadow-2xl overflow-hidden border-4 border-gray-100">
+        <header class="bg-gradient-to-r from-red-400 via-blue-400 to-green-400 p-6 text-center text-white relative">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-wide drop-shadow-md">Cinta, Bangga, Paham Rupiah</h1>
+            <p class="text-sm md:text-base mt-2 opacity-90 font-medium">Aplikasi Pembelajaran Mendalam & Eksplorasi Makna Rupiah</p>
+            <div class="mt-4 inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-semibold">
+                <i class="fa-solid fa-graduation-cap mr-1"></i> Target: Mampu Menerapkan CBP dalam Kehidupan Sehari-hari
             </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-                <span>Pustaka Virtual</span>
-                <span className="text-rose-600">CBP Rupiah</span>
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">Cinta, Bangga, & Paham Rupiah - Pembelajaran Mendalam</p>
-            </div>
-          </div>
-          
-          {/* Menu Navigasi Utama */}
-          <nav className="flex items-center bg-slate-100 p-1.5 rounded-2xl w-full md:w-auto overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('materi')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-250 whitespace-nowrap ${
-                activeTab === 'materi'
-                  ? 'bg-white text-rose-600 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Pemahaman Materi</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('game')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-250 whitespace-nowrap ${
-                activeTab === 'game'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Gamepad2 className="w-4 h-4" />
-              <span>Game Edukasi</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('asesmen')}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-250 whitespace-nowrap ${
-                activeTab === 'asesmen'
-                  ? 'bg-white text-emerald-600 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>Asesmen Mandiri</span>
-            </button>
-            {canGetCertificate && (
-              <button
-                onClick={() => setActiveTab('sertifikat')}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-250 whitespace-nowrap ${
-                  activeTab === 'sertifikat'
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-md'
-                    : 'bg-amber-100 text-amber-800 border border-amber-200 animate-bounce'
-                }`}
-              >
-                <Award className="w-4 h-4" />
-                <span>Sertifikat</span>
-              </button>
-            )}
-          </nav>
-        </div>
-      </header>
+        </header>
 
-      {/* Konten Utama */}
-      <main className="flex-grow max-w-6xl w-full mx-auto px-4 py-6 md:py-10">
+        <nav class="grid grid-cols-4 bg-gray-50 border-b-2 border-gray-100 font-bold text-center text-xs md:text-sm">
+            <button onclick="switchTab('beranda')" id="btn-beranda" class="py-4 border-b-4 border-blue-500 text-blue-600 transition-all"><i class="fa-solid fa-house block mb-1 text-lg"></i>Beranda</button>
+            <button onclick="switchTab('materi')" id="btn-materi" class="py-4 border-b-4 border-transparent text-gray-500 hover:text-gray-700 transition-all"><i class="fa-solid fa-book-open block mb-1 text-lg"></i>Materi</button>
+            <button onclick="switchTab('game')" id="btn-game" class="py-4 border-b-4 border-transparent text-gray-500 hover:text-gray-700 transition-all"><i class="fa-solid fa-gamepad block mb-1 text-lg"></i>Game</button>
+            <button onclick="switchTab('asesmen')" id="btn-asesmen" class="py-4 border-b-4 border-transparent text-gray-500 hover:text-gray-700 transition-all"><i class="fa-solid fa-file-signature block mb-1 text-lg"></i>Asesmen</button>
+        </nav>
 
-        {/* Informasi Tujuan Pembelajaran Banner */}
-        <div className="mb-8 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl -mr-5 -mt-5"></div>
-          <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
-          
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="max-w-2xl">
-              <span className="inline-block bg-rose-500/20 text-rose-300 text-xs font-bold px-3 py-1.5 rounded-full border border-rose-500/30 mb-3 uppercase tracking-wider">
-                Tujuan Pembelajaran Utama
-              </span>
-              <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-white mb-2 leading-snug">
-                Murid mampu memahami makna Cinta, Bangga, dan Paham Rupiah dalam penerapannya di kehidupan sehari-hari.
-              </h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                Rupiah bukan sekadar mata uang, melainkan simbol kedaulatan bangsa yang harus kita jaga melalui tindakan nyata setiap hari. Mari pelajari, mainkan simulasinya, dan uji pemahamanmu!
-              </p>
-            </div>
-            <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/10 w-full md:w-auto">
-              <BookmarkCheck className="w-10 h-10 text-rose-400 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-slate-400 uppercase font-semibold">Tingkat Pencapaian</p>
-                <p className="text-sm font-bold text-slate-200">Pembelajaran Mendalam</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <main class="p-4 md:p-8">
 
-        {/* ==================================== */}
-        {/* PILAR TAB 1: PEMAHAMAN MATERI       */}
-        {/* ==================================== */}
-        {activeTab === 'materi' && (
-          <div className="space-y-8 animate-fadeIn">
-            
-            {/* Tiga Pilar Pilihan */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              {/* Cinta Rupiah Card */}
-              <button
-                onClick={() => { setActivePillar('cinta'); setInteractive3D(''); }}
-                className={`p-6 rounded-3xl border-2 text-left transition-all duration-300 hover:shadow-lg relative overflow-hidden ${
-                  activePillar === 'cinta'
-                    ? 'border-rose-500 bg-rose-50/40 shadow-md ring-4 ring-rose-500/10'
-                    : 'border-slate-200 bg-white'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3.5 rounded-2xl ${activePillar === 'cinta' ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'}`}>
-                    <Heart className="w-7 h-7 fill-current" />
-                  </div>
-                  <span className="text-xs font-bold text-rose-600 bg-rose-100/50 px-2.5 py-1 rounded-full uppercase">Pilar 1</span>
+            <section id="tab-beranda" class="space-y-6">
+                <div class="bg-gradient-to-br from-yellow-50 to-amber-100 p-6 rounded-2xl border border-amber-200">
+                    <h2 class="text-xl font-bold text-amber-800 mb-2"><i class="fa-solid fa-star mr-2"></i>Pengantar Pembelajaran</h2>
+                    <p class="text-gray-700 leading-relaxed text-sm md:text-base">
+                        Rupiah bukan sekadar mata uang atau alat tukar biasa, melainkan <strong>simbol kedaulatan bangsa Indonesia</strong> yang harus kita jaga bersama. Melalui aplikasi ini, kamu tidak hanya menghafal definisinya, tetapi ditantang untuk memahami secara mendalam dan menerapkannya langsung dalam keputusan hidup sehari-hari.
+                    </p>
                 </div>
-                <h3 className="text-lg font-black text-slate-900 mb-1">Cinta Rupiah</h3>
-                <p className="text-xs text-rose-700 font-bold mb-3 uppercase tracking-wider">Kenali dan Rawat Rupiah</p>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Menjaga kualitas fisik rupiah dengan tidak melipat, mencoret, menstapler, membasahi, dan meremas. Serta mendeteksi keasliannya.
-                </p>
-              </button>
 
-              {/* Bangga Rupiah Card */}
-              <button
-                onClick={() => { setActivePillar('bangga'); setInteractive3D(''); }}
-                className={`p-6 rounded-3xl border-2 text-left transition-all duration-300 hover:shadow-lg relative overflow-hidden ${
-                  activePillar === 'bangga'
-                    ? 'border-blue-500 bg-blue-50/40 shadow-md ring-4 ring-blue-500/10'
-                    : 'border-slate-200 bg-white'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3.5 rounded-2xl ${activePillar === 'bangga' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600'}`}>
-                    <ShieldCheck className="w-7 h-7" />
-                  </div>
-                  <span className="text-xs font-bold text-blue-600 bg-blue-100/50 px-2.5 py-1 rounded-full uppercase">Pilar 2</span>
-                </div>
-                <h3 className="text-lg font-black text-slate-900 mb-1">Bangga Rupiah</h3>
-                <p className="text-xs text-blue-700 font-bold mb-3 uppercase tracking-wider">Simbol Kedaulatan Bangsa</p>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Memahami Rupiah sebagai alat pembayaran yang sah, pemersatu bangsa, serta lambang kedaulatan NKRI yang setara bendera merah putih.
-                </p>
-              </button>
-
-              {/* Paham Rupiah Card */}
-              <button
-                onClick={() => { setActivePillar('paham'); setInteractive3D(''); }}
-                className={`p-6 rounded-3xl border-2 text-left transition-all duration-300 hover:shadow-lg relative overflow-hidden ${
-                  activePillar === 'paham'
-                    ? 'border-emerald-500 bg-emerald-50/40 shadow-md ring-4 ring-emerald-500/10'
-                    : 'border-slate-200 bg-white'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3.5 rounded-2xl ${activePillar === 'paham' ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-600'}`}>
-                    <Brain className="w-7 h-7" />
-                  </div>
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-100/50 px-2.5 py-1 rounded-full uppercase">Pilar 3</span>
-                </div>
-                <h3 className="text-lg font-black text-slate-900 mb-1">Paham Rupiah</h3>
-                <p className="text-xs text-emerald-700 font-bold mb-3 uppercase tracking-wider">Bijak Bertransaksi & Belanja</p>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  Memahami fungsi uang sebagai alat tukar dan penyimpan nilai. Belanja secara bijak, waspada kejahatan siber, dan gemar menabung.
-                </p>
-              </button>
-
-            </div>
-
-            {/* AREA DETAIL PILAR */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-10 shadow-sm">
-              
-              {/* DETAIL: CINTA RUPIAH */}
-              {activePillar === 'cinta' && (
-                <div className="space-y-8 animate-fadeIn">
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
-                    <div>
-                      <div className="flex items-center gap-2 text-rose-600 font-bold text-sm uppercase tracking-wider mb-1">
-                        <Heart className="w-4 h-4 fill-current" /> Pilar 1: Cinta Rupiah
-                      </div>
-                      <h3 className="text-2xl font-black text-slate-900">Kenali dan Rawat Rupiah</h3>
-                      <p className="text-slate-500 text-sm mt-1">
-                        Cinta Rupiah diwujudkan dengan mengenali ciri-ciri keaslian uang kita dan senantiasa merawat fisiknya agar tetap layak edar.
-                      </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="clay-card p-5 bg-red-50 border-t-8 border-red-400 text-center">
+                        <i class="fa-solid fa-heart text-red-400 text-4xl mb-3"></i>
+                        <h3 class="font-extrabold text-lg text-red-700">1. CINTA</h3>
+                        <p class="text-xs text-gray-600 mt-2">Mengenali fisik uang, menerapkan 3D, dan merawatnya agar tidak cepat rusak melalui aksi nyata.</p>
                     </div>
-                  </div>
+                    <div class="clay-card p-5 bg-blue-50 border-t-8 border-blue-400 text-center">
+                        <i class="fa-solid fa-shield-halved text-blue-400 text-4xl mb-3"></i>
+                        <h3 class="font-extrabold text-lg text-blue-700">2. BANGGA</h3>
+                        <p class="text-xs text-gray-600 mt-2">Menghormati Rupiah sebagai pemersatu bangsa di seluruh pelosok NKRI dan tidak merendahkannya.</p>
+                    </div>
+                    <div class="clay-card p-5 bg-green-50 border-t-8 border-green-400 text-center">
+                        <i class="fa-solid fa-brain text-green-400 text-4xl mb-3"></i>
+                        <h3 class="font-extrabold text-lg text-green-700">3. PAHAM</h3>
+                        <p class="text-xs text-gray-600 mt-2">Bijak bertransaksi, mampu membedakan keinginan vs kebutuhan, serta waspada kejahatan siber.</p>
+                    </div>
+                </div>
 
-                  {/* Interaktif: Metode 3D */}
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                    <h4 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-yellow-500" />
-                      Interaktif: Coba Metode 3D (Dilihat, Diraba, Diterawang)
-                    </h4>
-                    <p className="text-xs text-slate-500 mb-6">Klik tombol di bawah ini untuk melihat bagaimana cara mengenali ciri keaslian uang Rupiah kertas secara visual.</p>
+                <div class="text-center pt-4">
+                    <button onclick="switchTab('materi')" class="clay-btn-blue px-6 py-3 font-bold text-sm shadow-md cursor-pointer">Mulai Belajar Sekarang <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                </div>
+            </section>
+
+            <section id="tab-materi" class="hidden space-y-8">
+                <div class="bg-white p-6 rounded-2xl border-2 border-red-100 shadow-sm">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="bg-red-400 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">1</span>
+                        <h2 class="text-xl font-extrabold text-red-600">Cinta Rupiah: Kenali & Rawat</h2>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Wujud cinta tanah air bisa dibuktikan dari cara kita memperlakukan uang fisik Rupiah.</p>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                      <div className="lg:col-span-5 flex flex-col gap-3">
-                        <button 
-                          onClick={() => setInteractive3D('dilihat')}
-                          className={`flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${
-                            interactive3D === 'dilihat' 
-                              ? 'bg-rose-500 text-white border-rose-500 shadow-md' 
-                              : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
-                          }`}
-                        >
-                          <div className={`p-2 rounded-lg ${interactive3D === 'dilihat' ? 'bg-white/20' : 'bg-rose-100 text-rose-600'}`}>
-                            <Eye className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold">1. DILIHAT</p>
-                            <p className="text-xs opacity-80">Warna jelas, ada benang pengaman & tinta berubah warna.</p>
-                          </div>
-                        </button>
-
-                        <button 
-                          onClick={() => setInteractive3D('diraba')}
-                          className={`flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${
-                            interactive3D === 'diraba' 
-                              ? 'bg-rose-500 text-white border-rose-500 shadow-md' 
-                              : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
-                          }`}
-                        >
-                          <div className={`p-2 rounded-lg ${interactive3D === 'diraba' ? 'bg-white/20' : 'bg-rose-100 text-rose-600'}`}>
-                            <Hand className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold">2. DIRABA</p>
-                            <p className="text-xs opacity-80">Permukaan uang kertas akan terasa kasar pada area gambar utama & lambang negara.</p>
-                          </div>
-                        </button>
-
-                        <button 
-                          onClick={() => setInteractive3D('diterawang')}
-                          className={`flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${
-                            interactive3D === 'diterawang' 
-                              ? 'bg-rose-500 text-white border-rose-500 shadow-md' 
-                              : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
-                          }`}
-                        >
-                          <div className={`p-2 rounded-lg ${interactive3D === 'diterawang' ? 'bg-white/20' : 'bg-rose-100 text-rose-600'}`}>
-                            <Sun className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold">3. DITERAWANG</p>
-                            <p className="text-xs opacity-80">Arahkan uang ke cahaya, akan terlihat tanda air (watermark) pahlawan nasional.</p>
-                          </div>
-                        </button>
-                      </div>
-
-                      {/* Visualisasi Simulasi 3D */}
-                      <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 min-h-[220px] flex flex-col justify-center items-center text-center relative overflow-hidden">
-                        {interactive3D === '' && (
-                          <div className="space-y-2">
-                            <Coins className="w-12 h-12 text-slate-300 mx-auto animate-bounce" />
-                            <p className="text-sm font-bold text-slate-600">Pilih salah satu metode 3D di samping</p>
-                            <p className="text-xs text-slate-400">Untuk memvisualisasikan cara memeriksa keaslian Rupiah secara mendalam.</p>
-                          </div>
-                        )}
-
-                        {interactive3D === 'dilihat' && (
-                          <div className="space-y-4 animate-scaleUp">
-                            <div className="w-48 h-24 bg-gradient-to-r from-red-100 via-pink-100 to-red-200 rounded-xl border-2 border-red-300 shadow-sm mx-auto flex items-center justify-between p-3 relative overflow-hidden">
-                              <div className="w-2.5 h-full bg-indigo-500/30 absolute left-1/3"></div>
-                              <span className="text-xs font-black text-rose-700 bg-white/60 px-1 rounded">Rp 100k</span>
-                              <div className="w-10 h-10 bg-rose-300 rounded-full flex items-center justify-center text-[10px] text-white">Soekarno</div>
-                            </div>
-                            <p className="text-xs text-slate-400">Pastikan warna uang kertas tampak terang dan jelas. Benang pengaman tertanam dengan baik dan berubah warna jika dilihat dari sudut pandang berbeda.</p>
-                          </div>
-                        )}
-
-                        {interactive3D === 'diraba' && (
-                          <div className="space-y-4 animate-scaleUp">
-                            <div className="w-48 h-24 bg-emerald-50 rounded-xl border-2 border-dashed border-emerald-400 shadow-sm mx-auto flex items-center justify-center relative p-3">
-                              <span className="text-2xl font-black text-emerald-800 tracking-wider">KASAR</span>
-                              <div className="absolute top-1 left-2 text-[8px] text-emerald-600">Tekstur Cetak Intaglio</div>
-                            </div>
-                            <p className="text-xs text-slate-400">Bagian tertentu seperti Gambar Pahlawan, Lambang Garuda, angka nominal, dan Kode Tuna Netra (Blind Code) akan terasa bertekstur kasar/timbul saat diraba.</p>
-                          </div>
-                        )}
-
-                        {interactive3D === 'diterawang' && (
-                          <div className="space-y-4 animate-scaleUp">
-                            <div className="w-48 h-24 bg-yellow-50/50 rounded-xl border-2 border-yellow-300 shadow-lg mx-auto flex items-center justify-center relative p-3">
-                              <div className="w-12 h-12 rounded-full bg-yellow-100/80 border-2 border-yellow-200 flex items-center justify-center animate-pulse">
-                                <span className="text-[10px] font-bold text-yellow-700">Tanda Air</span>
-                              </div>
-                            </div>
-                            <p className="text-xs text-slate-400">Arahkan uang ke arah cahaya. Tanda Air berupa gambar pahlawan serta lambang Bank Indonesia (rectoverso) akan terlihat menyatu secara sempurna.</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Edukasi Merawat Uang: Prinsip 5J */}
-                  <div className="border-t border-slate-100 pt-6">
-                    <button 
-                      onClick={() => setShow5J(!show5J)}
-                      className="w-full flex items-center justify-between p-4 bg-rose-50 text-rose-900 rounded-2xl border border-rose-100 hover:bg-rose-100 transition-colors"
-                    >
-                      <span className="font-bold flex items-center gap-2">
-                        <ShieldCheck className="w-5 h-5 text-rose-600" />
-                        Tahu Cara Merawat Rupiah? Pelajari Prinsip 5J
-                      </span>
-                      <ChevronRight className={`w-5 h-5 transform transition-transform ${show5J ? 'rotate-95' : ''}`} />
-                    </button>
-
-                    {show5J && (
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4 animate-slideDown">
-                        {[
-                          { title: "Jangan Dilipat", desc: "Melipat uang kertas membuat serta kertas patah dan cepat lusuh." },
-                          { title: "Jangan Dicoret", desc: "Mencoret-coret uang merusak estetika dan menutupi pengaman uang." },
-                          { title: "Jangan Distapler", desc: "Menstapler dapat melubangi kertas dan membuat uang gampang robek." },
-                          { title: "Jangan Diremas", desc: "Meremas uang merusak struktur kertas dan membuatnya terlihat buruk." },
-                          { title: "Jangan Dibasahi", desc: "Cairan dapat melunturkan zat warna dan memudarkan kertas uang." }
-                        ].map((item, index) => (
-                          <div key={index} className="bg-white p-4 rounded-xl border border-rose-100 text-center shadow-xs">
-                            <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm mx-auto mb-2">
-                              {index + 1}
-                            </div>
-                            <p className="text-xs font-extrabold text-slate-800 mb-1">{item.title}</p>
-                            <p className="text-[10px] text-slate-500 leading-relaxed">{item.desc}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* DETAIL: BANGGA RUPIAH */}
-              {activePillar === 'bangga' && (
-                <div className="space-y-8 animate-fadeIn">
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
-                    <div>
-                      <div className="flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-wider mb-1">
-                        <ShieldCheck className="w-4 h-4" /> Pilar 2: Bangga Rupiah
-                      </div>
-                      <h3 className="text-2xl font-black text-slate-900">Simbol Kedaulatan Bangsa</h3>
-                      <p className="text-slate-500 text-sm mt-1">
-                        Sama halnya dengan Bendera Merah Putih, Bahasa Indonesia, dan Lagu Kebangsaan, Rupiah adalah lambang kedaulatan negara yang wajib kita hormati dan gunakan secara sah.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-extrabold text-slate-950 mb-2 flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
-                          Alat Pemersatu Bangsa
-                        </h4>
-                        <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                          Dari Sabang sampai Merauke, dari Miangas hingga Pulau Rote, Rupiah menyatukan transaksi ekonomi seluruh suku bangsa di Indonesia. Bertransaksi menggunakan Rupiah mengikat persatuan kita di bawah payung NKRI.
-                        </p>
-                      </div>
-                      <div className="p-3 bg-blue-100/50 text-blue-800 rounded-xl text-xs font-semibold">
-                        💡 Gunakan selalu Rupiah untuk segala transaksi ekonomi di seluruh wilayah Indonesia tanpa terkecuali.
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-extrabold text-slate-950 mb-2 flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
-                          Simbol Kedaulatan & Cinta Produk Lokal
-                        </h4>
-                        <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                          Rupiah merepresentasikan kemandirian ekonomi bangsa. Bangga Rupiah berarti bangga menggunakan mata uang sendiri dan lebih memilih membeli serta mendukung produk-produk kreatif buatan dalam negeri.
-                        </p>
-                      </div>
-                      <div className="p-3 bg-emerald-100/50 text-emerald-800 rounded-xl text-xs font-semibold">
-                        🛍️ Berbelanja produk UMKM lokal menggunakan Rupiah mendongkrak ekonomi nasional.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* DETAIL: PAHAM RUPIAH */}
-              {activePillar === 'paham' && (
-                <div className="space-y-8 animate-fadeIn">
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
-                    <div>
-                      <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm uppercase tracking-wider mb-1">
-                        <Brain className="w-4 h-4" /> Pilar 3: Paham Rupiah
-                      </div>
-                      <h3 className="text-2xl font-black text-slate-900">Bijak Bertransaksi dan Belanja</h3>
-                      <p className="text-slate-500 text-sm mt-1">
-                        Paham Rupiah adalah tentang cerdas finansial. Mengetahui fungsi uang, menyusun prioritas kebutuhan, bertransaksi secara aman, dan mengamankan tabungan untuk masa depan.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Fungsi Uang */}
-                    <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-xs">
-                      <div className="p-3 bg-amber-50 text-amber-600 rounded-xl w-fit mb-3">
-                        <ShoppingBag className="w-6 h-6" />
-                      </div>
-                      <h4 className="font-bold text-slate-900 mb-1">Pahami Fungsi Uang</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        Bedakan kebutuhan dan keinginan. Belanja secara bertanggung jawab sesuai anggaran keuangan, tidak impulsif, dan rajin menabung sejak dini.
-                      </p>
-                    </div>
-
-                    {/* Waspada Kejahatan Siber */}
-                    <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-xs">
-                      <div className="p-3 bg-rose-50 text-rose-600 rounded-xl w-fit mb-3">
-                        <ShieldAlert className="w-6 h-6" />
-                      </div>
-                      <h4 className="font-bold text-slate-900 mb-1">Waspada Kejahatan Siber</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        Di era transaksi digital (QRIS, Mobile Banking), jaga kerahasiaan data pribadi keuanganmu. Jangan pernah membagikan PIN, Password, atau kode OTP kepada siapa pun!
-                      </p>
-                    </div>
-
-                    {/* Transaksi Bertanggung Jawab */}
-                    <div className="p-5 rounded-2xl border border-slate-100 bg-white shadow-xs">
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl w-fit mb-3">
-                        <Award className="w-6 h-6" />
-                      </div>
-                      <h4 className="font-bold text-slate-900 mb-1">Transaksi Bertanggung Jawab</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        Selalu bertransaksi jujur, pastikan nominal pembayaran pas, simpan bukti transaksi secara berkala, dan laporkan jika ada ketidaksesuaian/dugaan uang palsu.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
-
-            {/* CTA ke Menu Game */}
-            <div className="bg-slate-900 text-white p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h4 className="font-bold text-base">Sudah Membaca Semua Materi CBP Rupiah?</h4>
-                <p className="text-xs text-slate-400 mt-1">Uji pemahamanmu dalam mengelola skenario kehidupan nyata di Game Edukasi kami.</p>
-              </div>
-              <button 
-                onClick={() => setActiveTab('game')}
-                className="bg-white text-slate-950 hover:bg-slate-100 px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all"
-              >
-                <span>Mainkan Game Edukasi</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-          </div>
-        )}
-
-        {/* ==================================== */}
-        {/* PILAR TAB 2: GAME EDUKASI ("KISAH BUDI") */}
-        {/* ==================================== */}
-        {activeTab === 'game' && (
-          <div className="space-y-6 animate-fadeIn">
-            
-            {/* Header Game & Status Nilai */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              {/* Kolom Kiri: Skenario Game */}
-              <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm flex flex-col justify-between min-h-[400px]">
-                
-                {!gameState.isFinished ? (
-                  <div className="space-y-6">
-                    {/* Header Skenario */}
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                      <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-widest">
-                        Skenario {gameState.currentScenario + 1} dari {gameScenarios.length}
-                      </span>
-                      <span className="text-xs text-slate-400 font-medium">Petualangan Finansial</span>
-                    </div>
-
-                    {/* Skenario Utama */}
-                    <div className="space-y-3">
-                      <h3 className="text-xl font-black text-slate-900">{gameScenarios[gameState.currentScenario].title}</h3>
-                      <p className="text-slate-600 text-sm leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        {gameScenarios[gameState.currentScenario].description}
-                      </p>
-                    </div>
-
-                    {/* Pilihan Keputusan */}
-                    <div className="space-y-3 pt-2">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tentukan Tindakanmu:</p>
-                      {gameScenarios[gameState.currentScenario].options.map((option, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleGameAnswer(idx)}
-                          className="w-full text-left p-4 rounded-xl border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50/30 transition-all text-sm font-semibold text-slate-800 flex items-start gap-3"
-                        >
-                          <span className="bg-slate-100 text-slate-700 w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs mt-0.5 border border-slate-200">
-                            {String.fromCharCode(65 + idx)}
-                          </span>
-                          <span>{option.text}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  /* Game Selesai - Ringkasan */
-                  <div className="space-y-6">
-                    <div className="text-center py-6">
-                      <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle className="w-10 h-10" />
-                      </div>
-                      <h3 className="text-2xl font-black text-slate-900">Petualangan Selesai!</h3>
-                      <p className="text-slate-500 text-sm mt-1">Kamu telah menyelesaikan semua skenario keputusan CBP Rupiah.</p>
-                    </div>
-
-                    {/* Feedback Sejarah Keputusan */}
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Histori & Evaluasi Keputusanmu:</p>
-                      {gameState.history.map((hist, idx) => (
-                        <div key={idx} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                          <p className="font-extrabold text-slate-800">Kasus {idx+1}: {hist.scenarioTitle}</p>
-                          <p className="text-slate-600"><span className="font-bold">Keputusanmu:</span> {hist.chosenOption}</p>
-                          <p className="text-blue-700 font-medium bg-blue-50 p-2.5 rounded-lg border border-blue-100/50">✨ {hist.feedback}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-sm text-gray-700 mb-2"><i class="fa-solid fa-eye text-red-400 mr-2"></i>Metode 3D (Cek Keaslian)</h4>
+                            <ul class="text-xs space-y-1 text-gray-600 list-disc list-inside">
+                                <li><strong>Dilihat:</strong> Perhatikan warna cerah, benang pengaman, dan gambar perisai.</li>
+                                <li><strong>Diraba:</strong> Bagian angka nominal dan gambar pahlawan terasa kasar jika disentuh.</li>
+                                <li><strong>Diterawang:</strong> Angkat uang ke arah cahaya untuk melihat tanda air (watermark) logo BI.</li>
+                            </ul>
                         </div>
-                      ))}
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-sm text-gray-700 mb-2"><i class="fa-solid fa-hand-holding-heart text-red-400 mr-2"></i>Panduan Merawat (Prinsip 5J)</h4>
+                            <div class="grid grid-cols-5 gap-1 text-center text-[10px] font-bold text-red-700">
+                                <div class="bg-red-50 p-2 rounded">Jangan Dilipat</div>
+                                <div class="bg-red-50 p-2 rounded">Jangan Dicoret</div>
+                                <div class="bg-red-50 p-2 rounded">Jangan Diremas</div>
+                                <div class="bg-red-50 p-2 rounded">Jangan Distapler</div>
+                                <div class="bg-red-50 p-2 rounded">Jangan Dibasahi</div>
+                            </div>
+                        </div>
                     </div>
-
-                    <div className="flex items-center gap-3 pt-4">
-                      <button
-                        onClick={resetGame}
-                        className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        <span>Mulai Ulang Game</span>
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('asesmen')}
-                        className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <span>Lanjut ke Asesmen</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-              </div>
-
-              {/* Kolom Kanan: Status Nilai Karakter */}
-              <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
-                <div>
-                  <h4 className="font-black text-slate-900 text-base">Metrik Karakter CBP</h4>
-                  <p className="text-xs text-slate-400">Skor ini mencerminkan seberapa jauh kamu menerapkan nilai CBP Rupiah dalam simulasi.</p>
                 </div>
 
-                <div className="space-y-5">
-                  {/* Cinta Score */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="flex items-center gap-1.5 text-rose-600">
-                        <Heart className="w-4 h-4 fill-current" /> Cinta Rupiah
-                      </span>
-                      <span>{gameState.cintaScore} %</span>
+                <div class="bg-white p-6 rounded-2xl border-2 border-blue-100 shadow-sm">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="bg-blue-400 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">2</span>
+                        <h2 class="text-xl font-extrabold text-blue-600">Bangga Rupiah: Simbol Kedaulatan</h2>
                     </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-rose-500 h-full transition-all duration-500" style={{ width: `${gameState.cintaScore}%` }}></div>
-                    </div>
-                  </div>
-
-                  {/* Bangga Score */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="flex items-center gap-1.5 text-blue-600">
-                        <ShieldCheck className="w-4 h-4" /> Bangga Rupiah
-                      </span>
-                      <span>{gameState.banggaScore} %</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-blue-600 h-full transition-all duration-500" style={{ width: `${gameState.banggaScore}%` }}></div>
-                    </div>
-                  </div>
-
-                  {/* Paham Score */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="flex items-center gap-1.5 text-emerald-600">
-                        <Brain className="w-4 h-4" /> Paham Rupiah
-                      </span>
-                      <span>{gameState.pahamScore} %</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className="bg-emerald-600 h-full transition-all duration-500" style={{ width: `${gameState.pahamScore}%` }}></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status Evaluasi Instan */}
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs leading-relaxed space-y-2">
-                  <p className="font-extrabold text-slate-800">💡 Makna Skor Karakter:</p>
-                  <p className="text-slate-500">Nilai awal dimulai dari 50%. Untuk menjadi **Duta CBP Rupiah**, kamu harus berusaha mempertahankan skor di atas **75%** di semua pilar melalui keputusan belanja yang bijaksana, bangga produk lokal, serta peduli fisik uang.</p>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        )}
-
-        {/* ==================================== */}
-        {/* PILAR TAB 3: ASESMEN MANDIRI         */}
-        {/* ==================================== */}
-        {activeTab === 'asesmen' && (
-          <div className="space-y-6 animate-fadeIn">
-            
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm">
-              <div className="border-b border-slate-100 pb-5 mb-6">
-                <h3 className="text-xl font-black text-slate-900">Uji Asesmen CBP Rupiah</h3>
-                <p className="text-slate-500 text-xs mt-1">Selesaikan 5 soal studi kasus di bawah ini untuk menguji tingkat pemahaman mendalammu mengenai Cinta, Bangga, dan Paham Rupiah.</p>
-              </div>
-
-              {!assessmentSubmitted ? (
-                /* Lembar Soal */
-                <div className="space-y-8">
-                  {assessmentQuestions.map((q, qIdx) => (
-                    <div key={q.id} className="space-y-3">
-                      <p className="text-sm font-extrabold text-slate-900">
-                        {qIdx + 1}. {q.question}
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {q.options.map((opt, oIdx) => (
-                          <button
-                            key={oIdx}
-                            onClick={() => handleSelectAssessment(q.id, oIdx)}
-                            className={`p-3.5 text-left rounded-xl border text-xs font-semibold transition-all ${
-                              assessmentAnswers[q.id] === oIdx
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-500 ring-2 ring-emerald-500/10'
-                                : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
-                            }`}
-                          >
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="pt-4 border-t border-slate-100 flex justify-end">
-                    <button
-                      onClick={submitAssessment}
-                      disabled={Object.keys(assessmentAnswers).length < assessmentQuestions.length}
-                      className={`px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-all ${
-                        Object.keys(assessmentAnswers).length === assessmentQuestions.length
-                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-md'
-                          : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                      }`}
-                    >
-                      <span>Kirim Jawaban Asesmen</span>
-                      <CheckCircle className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Lembar Hasil Asesmen */
-                <div className="space-y-8">
-                  
-                  {/* Banner Hasil Skor */}
-                  <div className="bg-slate-900 text-white p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div>
-                      <h4 className="text-lg font-black">Hasil Evaluasi Belajar Anda</h4>
-                      <p className="text-xs text-slate-400 mt-0.5">Skor minimal kelulusan untuk memperoleh sertifikat digital adalah 80.</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-center bg-white/10 px-4 py-2.5 rounded-xl border border-white/10">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Skor Kamu</p>
-                        <p className={`text-2xl font-black ${assessmentScore >= 80 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {assessmentScore} / 100
-                        </p>
-                      </div>
-                      <div className="text-center bg-white/10 px-4 py-2.5 rounded-xl border border-white/10">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Status</p>
-                        <p className={`text-sm font-black ${assessmentScore >= 80 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {assessmentScore >= 80 ? 'LULUS 🎉' : 'BELUM LULUS ❌'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Kunci Jawaban & Pembahasan Mendalam */}
-                  <div className="space-y-4">
-                    <h4 className="font-extrabold text-slate-900 text-sm">Pembahasan Kunci Jawaban:</h4>
+                    <p class="text-sm text-gray-600 mb-4">Rupiah setara dengan bendera Merah Putih dan lagu Indonesia Raya sebagai identitas nasional negara.</p>
                     
-                    {assessmentQuestions.map((q, qIdx) => {
-                      const userAns = assessmentAnswers[q.id];
-                      const isCorrect = userAns === q.correct;
-                      return (
-                        <div key={q.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-extrabold text-slate-800">Pertanyaan {qIdx+1}</span>
-                            <span className={`flex items-center gap-1 font-bold ${isCorrect ? 'text-emerald-600' : 'text-rose-600'}`}>
-                              {isCorrect ? <CheckCircle className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
-                              {isCorrect ? 'Benar' : 'Salah'}
-                            </span>
-                          </div>
-                          <p className="text-slate-700 font-medium">{q.question}</p>
-                          <p className="text-slate-500">
-                            <span className="font-bold">Jawaban Kamu:</span> {q.options[userAns]}
-                          </p>
-                          {!isCorrect && (
-                            <p className="text-emerald-700">
-                              <span className="font-bold">Jawaban Benar:</span> {q.options[q.correct]}
-                            </p>
-                          )}
-                          <p className="bg-slate-200/50 p-2.5 rounded-lg text-slate-600 leading-relaxed">
-                            💡 <span className="font-bold text-slate-700">Penjelasan:</span> {q.explanation}
-                          </p>
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 text-sm space-y-3">
+                        <p class="text-gray-700"><strong>Kenapa kita harus bangga?</strong> Berdasarkan undang-undang, Rupiah wajib digunakan dalam setiap transaksi di seluruh wilayah Negara Kesatuan Republik Indonesia (NKRI), termasuk daerah perbatasan terluar.</p>
+                        <blockquote class="border-l-4 border-blue-400 pl-3 italic text-xs text-gray-600">
+                            "Menggunakan mata uang asing untuk bertransaksi di dalam negeri sama saja dengan melemahkan kedaulatan ekonomi bangsa kita sendiri."
+                        </blockquote>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border-2 border-green-100 shadow-sm">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="bg-green-400 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">3</span>
+                        <h2 class="text-xl font-extrabold text-green-600">Paham Rupiah: Bijak & Bertanggung Jawab</h2>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Paham berarti mengerti fungsi uang secara finansial maupun sosial dalam kehidupan.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div class="p-3 bg-green-50 rounded-xl border border-green-200">
+                            <h4 class="font-bold text-green-800 mb-1"><i class="fa-solid fa-scale-balanced mr-1"></i>Bijak Belanja</h4>
+                            <p class="text-gray-600">Mampu menolak keinginan konsumtif yang tidak penting dan fokus pada pemenuhan kebutuhan utama.</p>
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
-                    <button
-                      onClick={resetAssessment}
-                      className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition-colors"
-                    >
-                      Mulai Ulang Tes
-                    </button>
-                    {assessmentScore >= 80 ? (
-                      <button
-                        onClick={() => setActiveTab('sertifikat')}
-                        className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold text-sm rounded-xl flex items-center gap-2 shadow-md hover:from-amber-600 hover:to-yellow-600 transition-all"
-                      >
-                        <Award className="w-4 h-4 animate-bounce" />
-                        <span>Klaim Sertifikat Anda</span>
-                      </button>
-                    ) : (
-                      <p className="text-xs text-rose-600 font-bold">Harap raih skor minimal 80 untuk mengklaim sertifikat kelulusan.</p>
-                    )}
-                  </div>
-
+                        <div class="p-3 bg-green-50 rounded-xl border border-green-200">
+                            <h4 class="font-bold text-green-800 mb-1"><i class="fa-solid fa-piggy-bank mr-1"></i>Berhemat & Menabung</h4>
+                            <p class="text-gray-600">Menyisihkan sebagian uang untuk masa depan investasi serta membantu menjaga stabilitas ekonomi nasional.</p>
+                        </div>
+                        <div class="p-3 bg-green-50 rounded-xl border border-green-200">
+                            <h4 class="font-bold text-green-800 mb-1"><i class="fa-solid fa-user-shield mr-1"></i>Waspada Siber</h4>
+                            <p class="text-gray-600">Menjaga kerahasiaan PIN, OTP, tidak asal mengklik link palsu saat menggunakan dompet digital atau mobile banking.</p>
+                        </div>
+                    </div>
                 </div>
-              )}
 
-            </div>
-
-          </div>
-        )}
-
-        {/* ==================================== */}
-        {/* PILAR TAB 4: SERTIFIKAT KELULUSAN     */}
-        {/* ==================================== */}
-        {activeTab === 'sertifikat' && canGetCertificate && (
-          <div className="space-y-6 animate-scaleUp max-w-3xl mx-auto">
-            
-            {/* Template Sertifikat */}
-            <div className="bg-white rounded-3xl border-4 border-amber-400 p-8 md:p-12 shadow-xl relative overflow-hidden text-center space-y-6">
-              
-              {/* Ornamen Sertifikat */}
-              <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 border-amber-400"></div>
-              <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 border-amber-400"></div>
-              <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 border-amber-400"></div>
-              <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 border-amber-400"></div>
-              
-              <div className="space-y-2">
-                <Award className="w-16 h-16 text-amber-500 mx-auto" />
-                <h3 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 uppercase">Sertifikat Kelulusan</h3>
-                <p className="text-xs text-amber-600 font-bold tracking-widest uppercase">Duta Muda CBP Rupiah</p>
-              </div>
-
-              <div className="space-y-4 py-4">
-                <p className="text-xs text-slate-400 italic">Sertifikat ini dengan bangga diberikan kepada:</p>
-                <div className="border-b-2 border-slate-300 w-2/3 mx-auto pb-1.5">
-                  <span className="text-lg md:text-2xl font-black text-slate-800 tracking-wider">PRESTASI GEMILANG MURID</span>
+                <div class="text-center">
+                    <button onclick="switchTab('game')" class="clay-btn-green px-6 py-3 font-bold text-sm shadow-md cursor-pointer">Lanjut ke Game Edukasi <i class="fa-solid fa-gamepad ml-2"></i></button>
                 </div>
-                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                  Telah berhasil menyelesaikan rangkaian modul belajar, skenario keputusan, serta lulus ujian asesmen dengan skor luar biasa <strong>{assessmentScore} / 100</strong>. Anda secara sah diakui paham dan siap mempraktekkan perilaku Cinta, Bangga, dan Paham Rupiah di kehidupan sehari-hari.
-                </p>
-              </div>
+            </section>
 
-              {/* Tanda Tangan Virtual & Cap */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 max-w-md mx-auto">
-                <div className="text-center space-y-1">
-                  <div className="h-10 flex items-end justify-center text-xs font-serif italic text-slate-400">Bank Indonesia Virtual</div>
-                  <p className="text-[10px] font-bold text-slate-700 border-t border-slate-200 pt-1">Penerbit Kurikulum</p>
+            <section id="tab-game" class="hidden text-center space-y-6">
+                <div class="max-w-md mx-auto bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-300">
+                    <h2 class="text-2xl font-black text-gray-700 mb-1"><i class="fa-solid fa-gamepad text-blue-500 mr-2"></i>Rupiah Hero Game</h2>
+                    <p class="text-xs text-gray-500 mb-4">Bantu warga desa mengambil keputusan finansial yang tepat sesuai nilai CBP!</p>
+                    
+                    <div id="game-box" class="bg-slate-900 text-white p-6 rounded-xl min-h-[220px] flex flex-col justify-between shadow-inner text-left">
+                        <div id="game-scenario">
+                            <span class="bg-amber-400 text-slate-900 px-2 py-0.5 rounded text-[10px] font-bold">KASUS 1</span>
+                            <p class="mt-3 text-sm md:text-base leading-relaxed" id="scenario-text">Seorang pedagang di pasar melipat-lipat uang kertas Rupiah baru kembalian hingga sangat kecil agar muat di dompet koinnya. Apa tindakanmu?</p>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2 mt-4" id="game-choices">
+                            </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-between items-center text-sm font-bold bg-white p-3 rounded-xl border border-gray-100">
+                        <span class="text-gray-600">Skor: <span id="game-score" class="text-blue-600">0</span></span>
+                        <span id="game-status" class="text-xs font-semibold text-gray-400">Kasus 1 dari 3</span>
+                    </div>
                 </div>
-                <div className="text-center space-y-1">
-                  <div className="h-10 flex items-end justify-center text-xs font-serif italic text-rose-500 font-bold">LULUS MANDIRI</div>
-                  <p className="text-[10px] font-bold text-slate-700 border-t border-slate-200 pt-1">Status Kompetensi</p>
+            </section>
+
+            <section id="tab-asesmen" class="hidden space-y-6">
+                <div class="text-center max-w-xl mx-auto mb-6">
+                    <h2 class="text-2xl font-extrabold text-gray-800">Uji Pemahaman Mendalam</h2>
+                    <p class="text-xs text-gray-500 mt-1">Jawablah pertanyaan berbasis skenario nyata berikut untuk membuktikan kelayakanmu menjadi Duta Muda Rupiah.</p>
                 </div>
-              </div>
-            </div>
 
-            {/* Aksi Sertifikat */}
-            <div className="bg-slate-900 text-white p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h4 className="font-bold text-sm">Selamat atas Kelulusanmu!</h4>
-                <p className="text-xs text-slate-400">Bagikan dan jadilah panutan bagi teman-teman di sekolahmu untuk turut serta menjaga Rupiah kita.</p>
-              </div>
-              <button
-                onClick={() => window.print()}
-                className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all"
-              >
-                <span>Cetak Sertifikat</span>
-              </button>
-            </div>
+                <form id="quiz-form" onsubmit="evaluateQuiz(event)" class="space-y-6 max-w-2xl mx-auto">
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 space-y-3">
+                        <p class="font-bold text-sm text-gray-700">1. Teman sekelasmu mencoret-coret uang kertas Rupiah dengan pulpen untuk menulis nomor telepon temannya. Argumen terbaik apa yang harus kamu sampaikan mencerminkan nilai "Cinta Rupiah"?</p>
+                        <div class="space-y-2 text-xs">
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q1" value="A" required class="mt-0.5">
+                                <span>A. Menasihatinya agar tidak mencoret karena nanti uangnya ditolak saat membeli jajan di kantin.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q1" value="B" class="mt-0.5">
+                                <span>B. Mengingatkan bahwa mencoret Rupiah merusak fisik simbol kedaulatan negara, memperpendek usia edar uang, dan melanggar undang-undang hukum pidana.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q1" value="C" class="mt-0.5">
+                                <span>C. Membiarkannya saja selama tulisan tersebut tidak menutupi angka nominal utama uang tersebut.</span>
+                            </label>
+                        </div>
+                    </div>
 
-          </div>
-        )}
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 space-y-3">
+                        <p class="font-bold text-sm text-gray-700">2. Saat berlibur di pulau terluar Indonesia yang dekat perbatasan negara tetangga, kamu melihat beberapa resort penginapan memasang tarif harga hanya dalam mata uang asing. Bagaimana sikap "Bangga Rupiah" merespon hal ini?</p>
+                        <div class="space-y-2 text-xs">
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q2" value="A" required class="mt-0.5">
+                                <span>A. Memaklumisaja karena wilayah tersebut banyak dikunjungi oleh turis mancanegara agar mempermudah administrasi penginapan.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q2" value="B" class="mt-0.5">
+                                <span>B. Melaporkan atau menegur pihak resort secara baik bahwa setiap transaksi di wilayah NKRI wajib menggunakan Rupiah demi menjaga kedaulatan negara.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q2" value="C" class="mt-0.5">
+                                <span>C. Membayar menggunakan mata uang asing tersebut agar terlihat bergengsi dan mengikuti tren internasional.</span>
+                            </label>
+                        </div>
+                    </div>
 
-      </main>
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 space-y-3">
+                        <p class="font-bold text-sm text-gray-700">3. Kamu mempunyai uang jajan bulanan yang tersisa cukup banyak. Teman-temanmu mengajak membeli item game online model terbaru yang sedang viral namun tidak menambah performa belajarmu. Sebagai orang yang "Paham Rupiah", keputusan apa yang akan kamu ambil?</p>
+                        <div class="space-y-2 text-xs">
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q3" value="A" required class="mt-0.5">
+                                <span>A. Alokasikan sisa uang untuk tabungan masa depan/investasi, dan menolak ajakan karena membedakan kebutuhan produktif dengan keinginan konsumtif.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q3" value="B" class="mt-0.5">
+                                <span>B. Ikut membeli agar tidak dikucilkan dalam pertemanan karena gengsi sosial juga sangat penting saat ini.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 cursor-pointer">
+                                <input type="radio" name="q3" value="C" class="mt-0.5">
+                                <span>C. Menghabiskan uang tersebut lalu meminta tambahan uang saku darurat lagi ke orang tua esok harinya.</span>
+                            </label>
+                        </div>
+                    </div>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-white py-6 mt-12 border-t border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
-          <div className="text-center md:text-left space-y-1">
-            <p className="font-extrabold text-slate-300">Cinta, Bangga, Paham (CBP) Rupiah</p>
-            <p className="text-slate-500">Mata uang negara adalah cermin kedaulatan kita. Jaga dan hargai selalu.</p>
-          </div>
-          <div className="text-slate-500">
-            &copy; 2026 Pustaka Virtual CBP Rupiah. Dibuat untuk Tujuan Edukasi Nasional.
-          </div>
-        </div>
-      </footer>
+                    <div class="text-center">
+                        <button type="submit" class="clay-btn-red px-8 py-3 font-bold text-sm shadow-md cursor-pointer">Kirim Hasil Jawaban <i class="fa-solid fa-paper-plane ml-2"></i></button>
+                    </div>
+                </form>
 
+                <div id="quiz-result" class="hidden max-w-xl mx-auto p-6 bg-emerald-50 rounded-2xl border-2 border-emerald-300 text-center space-y-4">
+                    <h3 class="text-2xl font-black text-emerald-800">Selamat! Evaluasi Selesai</h3>
+                    <p class="text-sm text-gray-600">Skor Kompetensimu: <span id="score-val" class="font-bold text-lg text-emerald-600">0</span>/100</p>
+                    
+                    <div class="bg-white p-6 rounded-xl border-4 border-double border-amber-400 max-w-sm mx-auto shadow-md">
+                        <div class="text-[10px] text-amber-600 font-bold tracking-widest uppercase">Piagam Penghargaan</div>
+                        <h4 class="font-serif text-lg font-bold text-slate-800 mt-2">DUTA MUDA RUPIAH</h4>
+                        <div class="w-12 h-0.5 bg-amber-400 mx-auto my-2"></div>
+                        <p class="text-[11px] text-gray-500 italic">Diberikan kepada pengguna yang telah memahami secara mendalam makna Cinta, Bangga, dan Paham Rupiah dalam implementasi kehidupan sehari-hari.</p>
+                        <div class="mt-4 text-[9px] text-gray-400 font-mono">Diverifikasi Sistem Aplikasi Edukasi CBP</div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
+            &copy; 2026 Edukasi Bijak Keuangan Indonesia. Terinspirasi Gerakan Cinta, Bangga, Paham Rupiah.
+        </footer>
     </div>
-  );
-}
+
+    <script>
+        // 1. Sistem Pengatur Tab Menu
+        function switchTab(tabName) {
+            const tabs = ['beranda', 'materi', 'game', 'asesmen'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`btn-${t}`).className = "py-4 border-b-4 border-transparent text-gray-500 hover:text-gray-700 transition-all";
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            let activeColor = 'border-blue-500 text-blue-600';
+            if(tabName === 'materi') activeColor = 'border-red-400 text-red-500';
+            if(tabName === 'game') activeColor = 'border-purple-400 text-purple-500';
+            if(tabName === 'asesmen') activeColor = 'border-green-400 text-green-500';
+            
+            document.getElementById(`btn-${tabName}`).className = `py-4 border-b-4 ${activeColor} font-bold transition-all`;
+        }
+
+        // 2. Sistem Data Game Edukasi
+        const gameData = [
+            {
+                scenario: "Seorang pedagang di pasar melipat-lipat uang kertas Rupiah baru kembalian hingga sangat kecil agar muat di dompet koinnya. Apa tindakanmu?",
+                choices: [
+                    { text: "Membiarkan saja karena itu hak milik si pedagang.", correct: false },
+                    { text: "Mengingatkan dengan sopan prinsip 5J (Jangan dilipat) untuk menjaga fisik uang negara tetap prima.", correct: true }
+                ]
+            },
+            {
+                scenario: "Kamu sedang berada di kasir toko swalayan, lalu melihat kasir menolak uang koin Rp200 perak milik pembeli sebelum kamu karena dianggap tidak berharga. Respon terbaikmu?",
+                choices: [
+                    { text: "Membela pembeli dan menegaskan koin Rupiah sah sebagai alat pemersatu bangsa di NKRI.", correct: true },
+                    { text: "Mendukung kasir agar antrean cepat selesai.", correct: false }
+                ]
+            },
+            {
+                scenario: "Ada tautan pesan berantai di WhatsApp yang menjanjikan pembagian uang gratis Rp500 ribu dari Bank Indonesia, namun meminta nomor pin ATM kamu.",
+                choices: [
+                    { text: "Mengabaikan/menghapusnya karena tahu itu penipuan siber untuk mencuri data keuangan.", correct: true },
+                    { text: "Mengeklik tautan tersebut karena siapa tahu benar mendapat keuntungan.", correct: false }
+                ]
+            }
+        ];
+
+        let currentGameIndex = 0;
+        let gameScore = 0;
+
+        function renderGame() {
+            if (currentGameIndex >= gameData.length) {
+                document.getElementById('game-box').innerHTML = `
+                    <div class="text-center py-6">
+                        <i class="fa-solid fa-circle-check text-green-400 text-5xl mb-2"></i>
+                        <h4 class="font-bold text-lg">Game Selesai!</h4>
+                        <p class="text-xs text-slate-300 mt-1">Kamu berhasil menyelesaikan seluruh simulasi kasus dilema harian.</p>
+                        <button onclick="resetGame()" class="mt-4 bg-white/20 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-white/30 cursor-pointer">Main Lagi</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const current = gameData[currentGameIndex];
+            document.getElementById('game-status').innerText = `Kasus ${currentGameIndex + 1} dari ${gameData.length}`;
+            document.getElementById('scenario-text').innerText = current.scenario;
+            
+            const choicesContainer = document.getElementById('game-choices');
+            choicesContainer.innerHTML = '';
+            
+            current.choices.forEach((choice, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3 rounded-lg text-xs font-medium transition-all text-slate-100 cursor-pointer";
+                btn.innerText = choice.text;
+                btn.onclick = () => handleGameAnswer(choice.correct);
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function handleGameAnswer(isCorrect) {
+            if (isCorrect) {
+                gameScore += 33;
+                alert("Hebat! Keputusanmu mencerminkan warga negara yang bijak.");
+            } else {
+                alert("Kurang tepat. Coba telaah lagi nilai kebaikan untuk merawat Rupiah kita.");
+            }
+            document.getElementById('game-score').innerText = gameScore > 90 ? 100 : gameScore;
+            currentGameIndex++;
+            renderGame();
+        }
+
+        function resetGame() {
+            currentGameIndex = 0;
+            gameScore = 0;
+            document.getElementById('game-score').innerText = 0;
+            // Kembalikan struktur awal box
+            document.getElementById('game-box').innerHTML = `
+                <div id="game-scenario">
+                    <span class="bg-amber-400 text-slate-900 px-2 py-0.5 rounded text-[10px] font-bold">KASUS</span>
+                    <p class="mt-3 text-sm md:text-base leading-relaxed" id="scenario-text"></p>
+                </div>
+                <div class="grid grid-cols-1 gap-2 mt-4" id="game-choices"></div>
+            `;
+            renderGame();
+        }
+
+        // 3. Evaluasi Kuis Asesmen
+        function evaluateQuiz(event) {
+            event.preventDefault();
+            const q1 = document.querySelector('input[name="q1"]:checked').value;
+            const q2 = document.querySelector('input[name="q2"]:checked').value;
+            const q3 = document.querySelector('input[name="q3"]:checked').value;
+
+            let finalScore = 0;
+            if (q1 === 'B') finalScore += 33;
+            if (q2 === 'B') finalScore += 33;
+            if (q3 === 'A') finalScore += 34;
+
+            document.getElementById('score-val').innerText = finalScore;
+            document.getElementById('quiz-result').classList.remove('hidden');
+            
+            // Otomatis scroll ke bawah melihat hasil sertifikat
+            document.getElementById('quiz-result').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Menjalankan inisialisasi game saat aplikasi dibuka pertama kali
+        renderGame();
+    </script>
+</body>
+</html>
